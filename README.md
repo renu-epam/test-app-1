@@ -152,3 +152,229 @@ test-app/
 
 - `data/questions.json`
   - Contains the quiz categories and question definitions.
+
+## Question Data Format
+
+Questions are stored in `test-app/data/questions.json`. The data contains three categories:
+
+- `javascript`
+- `nodejs`
+- `general`
+
+Each category includes a display name and five questions. A question uses the following structure:
+
+```json
+{
+  "question": "What does a JavaScript function return when it has no return statement?",
+  "options": [
+    "null",
+    "undefined",
+    "false",
+    "0"
+  ],
+  "correct": 1,
+  "explanation": "A function without a return statement implicitly returns undefined."
+}
+```
+
+### Question Fields
+
+| Field | Description |
+|---|---|
+| `question` | The question text shown to the player. |
+| `options` | An array of answer choices displayed as numbered options. |
+| `correct` | Zero-based index of the correct option in the `options` array. |
+| `explanation` | Explanation shown after the player answers. |
+
+For example, `"correct": 1` identifies the second option because array indexes start at zero.
+
+## Extending the Question Bank
+
+To add or update questions:
+
+1. Open `test-app/data/questions.json`.
+2. Add a question to an existing category or add a new category using the existing data shape.
+3. Ensure every question includes:
+   - A non-empty `question` string
+   - An `options` array
+   - A valid zero-based `correct` index
+   - An `explanation` string
+4. Confirm that the `correct` index points to an item in the `options` array.
+5. Run the application from `test-app/` and verify the new question manually.
+
+Example:
+
+```json
+{
+  "question": "Which built-in Node.js module provides file system promises?",
+  "options": [
+    "fs/promises",
+    "http/promises",
+    "path/promises",
+    "readline/promises"
+  ],
+  "correct": 0,
+  "explanation": "The fs/promises module provides promise-based file system APIs."
+}
+```
+
+The current selection behavior takes the first requested number of entries from a category and then shuffles those selected entries. It does not randomly sample from the entire category before selecting the requested number.
+
+## Architecture
+
+The application uses a small modular architecture built on Node.js built-in APIs.
+
+```text
+index.js
+  ├── Loads questions.json
+  ├── Creates the readline interface
+  ├── Displays menus
+  ├── Coordinates Quiz
+  └── Handles replay and top-level errors
+
+src/input.js
+  └── Prompt and validation helpers
+
+src/quiz.js
+  └── Quiz state, shuffling, scoring, feedback, and review
+
+src/colors.js
+  └── Terminal styling and semantic color helpers
+
+data/questions.json
+  └── Quiz content
+```
+
+### Runtime Modules
+
+The application uses built-in Node.js modules, including:
+
+- `fs/promises` for asynchronous file loading
+- `path` for file path handling
+- `url` for module-relative path resolution
+- `readline` for interactive terminal input
+
+There are no external runtime or development dependencies.
+
+## Testing Status
+
+The repository includes an npm test script:
+
+```bash
+npm test
+```
+
+This runs:
+
+```bash
+node --test
+```
+
+No test files are currently present, so the project does not currently have meaningful automated test coverage. Validation is primarily manual by running the interactive application:
+
+```bash
+npm start
+```
+
+Potential future tests could cover:
+
+- Question loading and validation
+- Fisher-Yates question shuffling
+- Correct-answer evaluation
+- Score calculation
+- Input validation
+- Handling of empty or malformed categories
+
+## Configuration
+
+The application does not currently use environment variables, command-line arguments, or separate configuration files.
+
+Current configuration locations include:
+
+- Node.js engine requirement: `test-app/package.json`
+- Menu labels and question-count choices: `test-app/index.js`
+- Terminal styles: `test-app/src/colors.js`
+- Quiz questions and categories: `test-app/data/questions.json`
+
+## Troubleshooting and Caveats
+
+### Run commands from the correct directory
+
+The application is located in `test-app/`. If commands are run from the repository root, npm may not find the application’s `package.json`.
+
+```bash
+cd test-app
+npm start
+```
+
+### Terminal compatibility
+
+The application uses ANSI color codes and Unicode characters. If colors or symbols display incorrectly, use a modern terminal or a terminal configuration with ANSI and Unicode support.
+
+### Interactive terminal requirement
+
+The quiz expects interactive input through `readline`. Running it in a non-interactive environment may prevent prompts from working correctly.
+
+### Question data validity
+
+The application assumes that `questions.json` is correctly structured. Invalid JSON, missing fields, or an out-of-range `correct` index may cause incorrect behavior or runtime errors.
+
+### Empty categories
+
+Empty categories can result in invalid question counts or percentage calculations. Ensure that each selectable category contains valid questions.
+
+### Question selection behavior
+
+When a player selects fewer questions than are available, the application takes the first requested entries and then shuffles them. It does not select a random subset from the complete category.
+
+### Repository metadata
+
+The repository currently includes macOS metadata artifacts such as `.DS_Store` and `__MACOSX/` files. These files are not required by the application and should generally be removed and ignored in future development.
+
+### Error handling
+
+Top-level error handling is present, but malformed question data and some invalid runtime states may still require additional validation.
+
+## Development Recommendations
+
+- Add automated tests for quiz logic and input validation.
+- Add validation for the question JSON before starting a game.
+- Improve random question selection so a subset is sampled from the full category.
+- Handle empty categories and insufficient question counts explicitly.
+- Consider separating menu configuration from `index.js`.
+- Add a `.gitignore` file for macOS metadata and generated files.
+- Add formatting and linting configuration if the project grows.
+- Keep question indexes synchronized with their option arrays.
+- Test the application in terminals with and without ANSI color support.
+- Consider adding a non-interactive mode only if future automation or CI usage requires it.
+
+## Contributing
+
+Contributions are welcome. Before making changes:
+
+1. Fork or clone the repository.
+2. Create a focused branch for your change.
+3. Make changes inside `test-app/`.
+4. Preserve the existing native ES Module style.
+5. Update `data/questions.json` carefully when adding quiz content.
+6. Run the application manually:
+
+   ```bash
+   cd test-app
+   npm start
+   ```
+
+7. Run the available test command:
+
+   ```bash
+   npm test
+   ```
+
+8. Review the diff and remove unrelated files or metadata artifacts.
+9. Submit a pull request describing the change and how it was verified.
+
+When adding questions, verify that the answer index is zero-based and that the explanation matches the intended answer.
+
+## License
+
+No license file was found in the repository. The project should not be assumed to have an open-source license. Licensing terms should be clarified before redistributing, modifying, or incorporating the project into another product.
